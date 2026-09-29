@@ -1,0 +1,11 @@
+/* The handwriting font ships inside the app (no internet needed). */
+@font-face {
+  font-family: 'Gaegu';
+  src: url('../../assets/fonts/Gaegu-Regular.woff2') format('woff2');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Gaegu';
+  src: url('../../assets/fonts/Gaegu-Bold.woff2') format('woff2');
+  font-weight: 700;
+}

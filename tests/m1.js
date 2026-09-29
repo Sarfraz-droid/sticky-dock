@@ -1,0 +1,25 @@
+const { sleep, check, shot, js, waitFor, done } = require('./helpers');
+const { screen } = require('electron');
+module.exports = async (api) => {
+  const { app } = api;
+  await waitFor(() => api.strip.isVisible());
+  await sleep(800);
+  console.log('layout:', JSON.stringify(api.layout));
+  const wa = screen.getPrimaryDisplay().workArea;
+  const sb = api.strip.getBounds();
+  check('strip glued to right edge', sb.x + sb.width === wa.x + wa.width, JSON.stringify(sb));
+  check('strip vertically centered', Math.abs(sb.y + sb.height / 2 - (wa.y + wa.height / 2)) <= 1);
+  await shot(api.strip, 'm1-strip');
+  api.openNote();
+  await sleep(400);
+  check('note open', api.getState() === 'open');
+  check('strip hidden while open', !api.strip.isVisible());
+  const nb = api.note.getBounds();
+  check('note is square 360', nb.width === 360 && nb.height === 360, JSON.stringify(nb));
+  check('note docked on right edge', nb.x + nb.width === wa.x + wa.width);
+  await shot(api.note, 'm1-note-open');
+  api.collapseNote();
+  await sleep(500);
+  check('collapsed', api.getState() === 'collapsed' && !api.note.isVisible() && api.strip.isVisible());
+  done(app);
+};

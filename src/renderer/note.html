@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'">
+  <title>Sticky Dock</title>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="note.css">
+</head>
+<body class="font-medium">
+  <!-- The whole note: the background picture is the note itself -->
+  <div id="note" class="note">
+
+    <!-- Everything below lives inside the cream area (positions set by note.js) -->
+    <div id="cream" class="cream">
+
+      <!-- 1. Top row: also the handle you drag the note with -->
+      <header class="toprow">
+        <button id="pinBtn" class="icon-btn pin" title="Pin note (stay open and on top)" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 5 3 3v2h-4v6l-1 2-1-2v-6H7v-2l3-3z"/></svg>
+        </button>
+        <div id="titleWrap" class="title-wrap">
+          <div id="title" class="title" title="Double-click to rename"></div>
+          <input id="titleInput" class="title-input" maxlength="80" hidden>
+        </div>
+        <button id="gearBtn" class="icon-btn" title="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3 5.5 5.5"/></svg>
+        </button>
+        <button id="collapseBtn" class="icon-btn" title="Tuck away (Esc)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path id="collapseArrow" d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </header>
+
+      <!-- 2. Search -->
+      <div class="search">
+        <div class="pill">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>
+          <input id="searchInput" type="text" placeholder="search all notes" spellcheck="false" autocomplete="off">
+        </div>
+        <div id="results" class="results" role="listbox" hidden></div>
+      </div>
+
+      <!-- 3. Notes list -->
+      <div class="notesrow">
+        <button id="listBtn" class="chip" title="All notes">
+          <span id="listLabel">my notes</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>
+        </button>
+        <button id="newBtn" class="icon-btn small" title="New note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>
+        </button>
+        <button id="deleteBtn" class="icon-btn small" title="Delete this note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12M10 7V5h4v2M8 7l1 12h6l1-12"/></svg>
+        </button>
+        <div class="type-toggle" id="typeToggle">
+          <button data-type="note" class="on" title="Free notes">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg>
+          </button>
+          <button data-type="todo" title="To-do list">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4v4H4zM10 8h10M4 14h4v4H4zM10 16h10"/></svg>
+          </button>
+        </div>
+        <div id="notesList" class="notes-list" role="listbox" hidden></div>
+      </div>
+
+      <!-- 4. Writing area -->
+      <div class="page-wrap" id="pageWrap">
+        <textarea id="page" class="page" spellcheck="false" placeholder="jot something down..."></textarea>
+      </div>
+      <div class="todo-wrap" id="todoWrap" hidden></div>
+    </div>
+
+    <!-- 5. Pagination: sits beside the strawberry, never on top of it -->
+    <footer id="pager" class="pager">
+      <button id="prevBtn" class="icon-btn small" title="Previous page (Ctrl+PageUp)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <span id="pageLabel" class="page-label">page 1 of 1</span>
+      <button id="nextBtn" class="icon-btn small" title="Next page (Ctrl+PageDown)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </footer>
+
+    <!-- Overlays (settings, confirm, messages) cover only the cream area -->
+    <div id="overlayArea" class="overlay-area">
+      <section id="settingsPanel" class="panel" hidden>
+        <div class="panel-head">
+          <h2>settings</h2>
+          <button id="settingsClose" class="icon-btn small" title="Close settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>
+          </button>
+        </div>
+        <label class="row"><span>Pin note</span><input id="setPinned" type="checkbox" class="toggle"></label>
+        <label class="row"><span>Start with Windows</span><input id="setStartup" type="checkbox" class="toggle"></label>
+        <div class="row"><span>Dock side</span>
+          <div class="seg" id="setSide">
+            <button data-v="left">left</button><button data-v="right">right</button>
+          </div>
+        </div>
+        <div class="row"><span>Text size</span>
+          <div class="seg" id="setFont">
+            <button data-v="small">S</button><button data-v="medium">M</button><button data-v="large">L</button>
+          </div>
+        </div>
+        <div class="row"><span>Shortcut</span>
+          <button id="setShortcut" class="chip keys" title="Click, then press your new key combo"></button>
+        </div>
+        <p id="shortcutMsg" class="hint" hidden></p>
+        <div class="row buttons">
+          <button id="designBtn" class="chip">change design</button>
+          <button id="exportBtn" class="chip">export all notes</button>
+          <button id="folderBtn" class="chip">open data folder</button>
+        </div>
+        <button id="deletedToggle" class="linkish">recently deleted</button>
+        <div id="deletedList" class="deleted-list" hidden></div>
+      </section>
+
+      <section id="confirmBox" class="panel confirm" hidden>
+        <p id="confirmText"></p>
+        <div class="row buttons">
+          <button id="confirmNo" class="chip">keep it</button>
+          <button id="confirmYes" class="chip danger">delete</button>
+        </div>
+      </section>
+
+      <div id="toast" class="toast" hidden></div>
+    </div>
+
+    <!-- Choose your note design (shown on first launch and from settings) -->
+    <section id="themePicker" class="picker" hidden>
+      <h2>pick your note 🍓</h2>
+      <p class="sub">you can change this later in settings</p>
+      <div class="picker-grid" id="pickerGrid"></div>
+    </section>
+
+    <!-- Drag this corner to resize (stays square) -->
+    <div id="grip" class="grip" title="Drag to resize"></div>
+  </div>
+
+  <script src="pagination.js"></script>
+  <script src="editor.js"></script>
+  <script src="search.js"></script>
+  <script src="note.js"></script>
+</body>
+</html>
