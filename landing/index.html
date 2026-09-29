@@ -104,14 +104,17 @@ kbd { font: 700 0.82em var(--body); background: var(--pink); border-radius: 6px;
 /* Designs chapter: tall, with the text pinned while scrolling flips through the designs */
 #designs { min-height: 340svh; justify-content: flex-start; padding-top: 0; padding-bottom: 0; }
 #designs .pin {
-  position: sticky; top: max(84px, calc(50svh - 170px)); padding: 26px 28px 28px; border-radius: 28px;
+  position: sticky; top: 50svh; transform: translateY(-50%); /* centred on the note */ padding: 26px 28px 28px; border-radius: 28px;
   background: color-mix(in srgb, var(--d-cream, #FFF8E8) 88%, #fff);
   border: 3px solid var(--d-accent, #F4B6C4);
   box-shadow: 0 18px 40px -24px var(--d-deep, #E98AA0);
   transition: background .5s, border-color .5s, box-shadow .5s;
 }
-#designs .pin h2 { color: var(--d-ink, var(--ink)); transition: color .5s; }
-#designs .intro, #designs .scroll-hint { display: none; } /* the per-design blurb replaces it */
+#designs .pin h2 { font-size: clamp(30px, 3vw, 44px); color: var(--d-ink, var(--ink)); transition: color .5s; }
+#designs .intro, #designs .scroll-hint { display: none; }
+#designs .thumbs { flex-wrap: nowrap; gap: 10px; }
+#designs .thumb { flex: 1 1 0; width: auto; height: auto; max-width: 62px; aspect-ratio: 1; }
+#designs .thumb-ring { max-width: 62px; } /* the per-design blurb replaces it */
 .d-count { font: 800 14px/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--d-deep, var(--berry)); margin: 0 0 14px !important; transition: color .5s; }
 .design-blurb { font-size: 20px; margin-top: 12px !important; color: var(--d-ink, var(--ink)); min-height: 3.1em; }
 .design-name { color: var(--d-deep, var(--berry)); transition: color .5s; }
@@ -295,7 +298,7 @@ footer .ver { margin-top: 26px; font-size: 14px; color: var(--ink-soft); }
   .chapter.hero { min-height: 60svh; }
   .chapter p, .chapter .lead { font-size: 19px; }
   #designs { min-height: 260svh; padding: 0 16px; }
-  #designs .pin { top: calc(var(--stage-h, 46svh) + 10px); padding: 16px 16px 18px; border-radius: 22px; }
+  #designs .pin { top: calc(var(--stage-h, 46svh) + 10px); transform: none; padding: 16px 16px 18px; border-radius: 22px; }
   #designs .pin h2 { font-size: 26px; }
   #designs .intro, #designs .scroll-hint { display: none; }
   #designs .thumbs { flex-wrap: nowrap; gap: 8px; margin-top: 14px; }
