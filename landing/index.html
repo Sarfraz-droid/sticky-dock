@@ -103,7 +103,20 @@ kbd { font: 700 0.82em var(--body); background: var(--pink); border-radius: 6px;
 
 /* Designs chapter: tall, with the text pinned while scrolling flips through the designs */
 #designs { min-height: 340svh; justify-content: flex-start; padding-top: 0; padding-bottom: 0; }
-#designs .pin { position: sticky; top: max(96px, calc(50svh - 190px)); padding: 24px 0 40px; }
+#designs .pin {
+  position: sticky; top: max(84px, calc(50svh - 170px)); padding: 26px 28px 28px; border-radius: 28px;
+  background: color-mix(in srgb, var(--d-cream, #FFF8E8) 88%, #fff);
+  border: 3px solid var(--d-accent, #F4B6C4);
+  box-shadow: 0 18px 40px -24px var(--d-deep, #E98AA0);
+  transition: background .5s, border-color .5s, box-shadow .5s;
+}
+#designs .pin h2 { color: var(--d-ink, var(--ink)); transition: color .5s; }
+#designs .intro, #designs .scroll-hint { display: none; } /* the per-design blurb replaces it */
+.d-count { font: 800 14px/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--d-deep, var(--berry)); margin: 0 0 14px !important; transition: color .5s; }
+.design-blurb { font-size: 20px; margin-top: 12px !important; color: var(--d-ink, var(--ink)); min-height: 3.1em; }
+.design-name { color: var(--d-deep, var(--berry)); transition: color .5s; }
+.d-bar { height: 6px; border-radius: 6px; background: color-mix(in srgb, var(--d-accent, #F4B6C4) 40%, transparent); margin-top: 18px; overflow: hidden; }
+.d-bar i { display: block; height: 100%; width: 100%; background: var(--d-deep, var(--berry)); transform-origin: left; transform: scaleX(0); border-radius: 6px; }
 .scroll-hint { font-size: 15px; color: var(--ink-soft); margin-top: 22px !important; }
 .thumbs { position: relative; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
 .thumb {
@@ -281,8 +294,15 @@ footer .ver { margin-top: 26px; font-size: 14px; color: var(--ink-soft); }
   .chapter { min-height: 72svh; justify-content: flex-start; padding: 36px 24px 90px; max-width: none; }
   .chapter.hero { min-height: 60svh; }
   .chapter p, .chapter .lead { font-size: 19px; }
-  #designs { min-height: 240svh; padding: 0 24px; }
-  #designs .pin { top: calc(var(--stage-h, 46svh) + 8px); padding-top: 20px; }
+  #designs { min-height: 260svh; padding: 0 16px; }
+  #designs .pin { top: calc(var(--stage-h, 46svh) + 10px); padding: 16px 16px 18px; border-radius: 22px; }
+  #designs .pin h2 { font-size: 26px; }
+  #designs .intro, #designs .scroll-hint { display: none; }
+  #designs .thumbs { flex-wrap: nowrap; gap: 8px; margin-top: 14px; }
+  #designs .thumb, #designs .thumb-ring { width: calc((100% - 40px) / 6); height: auto; aspect-ratio: 1; }
+  .design-blurb { font-size: 17px; margin-top: 8px !important; min-height: 4.6em; }
+  .d-count { margin-bottom: 8px !important; }
+  .design-name { font-size: 24px; margin-top: 10px !important; }
   .thumb, .thumb-ring { width: 52px; height: 52px; }
   .thumb { border-radius: 14px; } .thumb-ring { border-radius: 17px; }
   .get { padding-top: 120px; }
@@ -342,10 +362,13 @@ footer .ver { margin-top: 26px; font-size: 14px; color: var(--ink-soft); }
 
   <div class="chapter" id="designs" data-t="Pick a design">
     <div class="pin">
+    <p class="d-count" id="dCount">Design 1 of 6</p>
     <h2>Pick the one that feels like you</h2>
-    <p>Strawberry cat, cherry, panda, orange, tap-tap or fruit pets. You choose the first time you open it, and you can switch whenever you like.</p>
+    <p class="intro">Strawberry cat, cherry, panda, orange, tap-tap or fruit pets. You choose the first time you open it, and you can switch whenever you like.</p>
     <div class="thumbs" id="thumbs" role="group" aria-label="Preview a design"><span class="thumb-ring" id="thumbRing" aria-hidden="true"></span></div>
     <p class="design-name" id="designName" aria-live="polite">Strawberry cat</p>
+    <p class="design-blurb" id="designBlurb"></p>
+    <div class="d-bar" aria-hidden="true"><i id="dBar"></i></div>
     <p class="scroll-hint">Keep scrolling and the designs change by themselves.</p>
     </div>
   </div>
@@ -511,6 +534,7 @@ var THEMES = [{"id": "strawberry", "name": "Strawberry cat", "rule": true, "c": 
   placeCaret(0);
 
   var themeIx = 0;
+  var designsEl = document.getElementById('designs');
   var bgFront = bgA, bgBack = bgB;
   function k(t) { return Math.min(1, (t.c.b - t.c.t) / 0.56); }
   function box(t) { return { left: (t.c.l * 100) + '%', top: (t.c.t * 100) + '%', right: ((1 - t.c.r) * 100) + '%', bottom: ((1 - t.c.b) * 100) + '%' }; }
@@ -530,10 +554,25 @@ var THEMES = [{"id": "strawberry", "name": "Strawberry cat", "rule": true, "c": 
     var x = h(a), y = h(b);
     return '#' + x.map(function (v, i) { return Math.round(v + (y[i] - v) * amt).toString(16).padStart(2, '0'); }).join('');
   }
+  var BLURBS = {
+    strawberry: 'Soft pink and cream, with a sleepy strawberry cat keeping watch. The one that started it all.',
+    cherry: 'A cosy red gingham picnic blanket with a cherry on top. Bold, warm and a little bit fancy.',
+    panda: 'Clean blue graph paper and a friendly panda. Great for lists, plans and tidy thinkers.',
+    orange: 'A sunny citrus note with washi tape and doodles. Bright enough to wake up your to-do list.',
+    'tap': 'Playful tap-tap paper with cheerful sticker energy. Made for quick thoughts on the go.',
+    pets: 'Fruit-hatted pets on a warm grid. Silly, sweet and impossible to ignore.'
+  };
+  function paintPanel(t, i) {
+    var p = t.p, s = designsEl.style;
+    s.setProperty('--d-accent', p.accent); s.setProperty('--d-deep', p.berry || p.accentDeep);
+    s.setProperty('--d-cream', p.cream); s.setProperty('--d-ink', p.ink);
+    $('#dCount').textContent = 'Design ' + (i + 1) + ' of ' + THEMES.length;
+    swapText($('#designBlurb'), BLURBS[t.id] || '');
+  }
   function setTheme(i, instant) {
     if (i === themeIx && !instant) return;
     themeIx = i; var t = THEMES[i];
-    paint(t);
+    paint(t); paintPanel(t, i);
     if (instant) {
       bgFront.style.backgroundImage = 'url("' + t.img + '")';
       Object.assign(nc.style, box(t));
@@ -564,6 +603,7 @@ var THEMES = [{"id": "strawberry", "name": "Strawberry cat", "rule": true, "c": 
   });
   function moveRing(instant) {
     var b = $$('.thumb')[themeIx]; if (!b) return;
+    ring.style.width = b.offsetWidth + 'px'; ring.style.height = b.offsetHeight + 'px';
     A(ring, { x: b.offsetLeft - 0, y: b.offsetTop - 0 }, instant ? { duration: 0 } : { type: 'spring', bounce: 0.35, duration: 0.55 });
   }
 
@@ -688,7 +728,6 @@ var THEMES = [{"id": "strawberry", "name": "Strawberry cat", "rule": true, "c": 
     if (cycleTimer || userPicked || RM) return;
     // designs now follow the scroll position instead of a timer (see themeFromScroll)
   }
-  var designsEl = $('#designs');
   function themeFromScroll() {
     var pin = $('.pin', designsEl), r = designsEl.getBoundingClientRect();
     var pinTop = parseFloat(getComputedStyle(pin).top) || 0;
@@ -696,6 +735,7 @@ var THEMES = [{"id": "strawberry", "name": "Strawberry cat", "rule": true, "c": 
     var p = Math.max(0, Math.min(0.9999, (pinTop - r.top - 24) / travel));
     var i = Math.floor(p * THEMES.length);
     if (i !== lastScrollTheme) { lastScrollTheme = i; setTheme(i); }
+    $('#dBar').style.transform = 'scaleX(' + (p * THEMES.length - i) + ')';
   }
   var lastScrollTheme = -1;
   function stopCycle() { clearInterval(cycleTimer); cycleTimer = null; }
