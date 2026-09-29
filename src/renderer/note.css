@@ -1,0 +1,506 @@
+/* note.css - the look of the open note.
+   Colours are picked from note-bg.png so everything feels like one sticker. */
+
+:root {
+  --ink: #5B3A32;        /* warm dark brown text */
+  --ink-soft: #9A7B72;   /* quieter brown for small labels */
+  --pink: #F4B6C4;       /* border pink */
+  --pink-deep: #E98AA0;  /* focus rings, accents */
+  --berry: #E5546B;      /* strawberry red: "pin is on" */
+  --cream: #FFF8E8;
+  --paper: #FFFDF6;      /* slightly lighter cream for pop-ups */
+  --grey: #B9AAA5;       /* "off" state */
+  --mark: #FFD3DC;       /* search highlight */
+
+  /* Positions inside the picture. note.js overwrites these with measured values. */
+  --cl: 6.5%; --ct: 6.5%; --cr: 93.5%; --cb: 93.5%;
+  --char-t: 72%; --char-r: 24.5%;
+
+  color-scheme: light; /* stay pink + cream even in Windows dark mode */
+}
+
+body.font-small  { --fs: 16px; --lh: 21px; }
+body.font-medium { --fs: 19px; --lh: 24px; }
+body.font-large  { --fs: 23px; --lh: 29px; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: 'Gaegu', 'Comic Sans MS', cursive;
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+/* ---------- the note and its slide animation ---------- */
+.note {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  transform: translate3d(105%, 0, 0);
+  opacity: 0;
+  will-change: transform, opacity; /* keep it on its own GPU layer so the slide is smooth */
+  backface-visibility: hidden;
+  /* closing: quick and eased-in */
+  transition: transform 220ms cubic-bezier(.4, 0, 1, 1), opacity 180ms ease-in;
+}
+body.side-left .note { transform: translate3d(-105%, 0, 0); }
+/* opening: a longer, softly-settling ease-out (same feel as native macOS panels) */
+body .note.open {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+  transition: transform 320ms cubic-bezier(.16, 1, .3, 1), opacity 200ms ease-out;
+}
+body.no-anim .note { transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .note { transition: opacity 120ms ease; }
+}
+
+/* ---------- the cream area (everything lives in here) ---------- */
+.cream, .overlay-area {
+  position: absolute;
+  left: var(--cl);
+  top: var(--ct);
+  right: calc(100% - var(--cr));
+  bottom: calc(100% - var(--cb)); /* content box is already clear of characters */
+}
+.cream {
+  display: flex;
+  flex-direction: column;
+  padding: 7px 9px 0;
+  gap: 5px;
+}
+
+/* ---------- 1. top row = drag handle ---------- */
+.toprow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  cursor: grab; /* the top row is the handle you move the note with (JS drag) */
+}
+.toprow button, .title { cursor: pointer; }
+.title { cursor: text; }
+body.dragging, body.dragging .toprow { cursor: grabbing; }
+body.dragging .page, body.dragging * { user-select: none; }
+
+.title-wrap {
+  flex: 0 1 auto; /* title takes what it needs; the gap after it is still a drag handle */
+  min-width: 0;
+  display: flex;
+}
+.title {
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 26px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: text;
+  padding: 0 2px;
+  max-width: 100%;
+}
+/* Space after the title that's still draggable */
+.toprow::after { content: ''; order: 2; flex: 1 0 18px; }
+#gearBtn { order: 3; }
+#collapseBtn { order: 4; }
+
+.title-input {
+  font: 700 20px/24px 'Gaegu', cursive;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1.5px solid var(--pink);
+  border-radius: 10px;
+  padding: 0 6px;
+  width: 100%;
+  outline: none;
+}
+
+/* ---------- buttons ---------- */
+.icon-btn {
+  width: 25px;
+  height: 25px;
+  flex: none;
+  border: none;
+  border-radius: 50%;
+  background: rgba(244, 182, 196, 0.35);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 120ms ease, transform 120ms ease;
+}
+.icon-btn.small { width: 22px; height: 22px; }
+.icon-btn:hover { background: rgba(244, 182, 196, 0.65); }
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn:disabled { opacity: 0.35; cursor: default; background: rgba(244, 182, 196, 0.25); }
+.icon-btn svg { width: 15px; height: 15px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* The pin: grey outline when off, filled strawberry red when on */
+.pin svg { stroke: var(--grey); width: 16px; height: 16px; }
+.pin[aria-pressed="true"] { background: rgba(229, 84, 107, 0.16); }
+.pin[aria-pressed="true"] svg { fill: var(--berry); stroke: var(--berry); transform: rotate(-20deg); }
+
+:focus-visible { outline: 2px solid var(--pink-deep); outline-offset: 1px; }
+
+.chip {
+  border: 1.5px solid var(--pink);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  padding: 0 10px;
+  height: 24px;
+  font-size: 16px;
+  line-height: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+.chip:hover { background: rgba(244, 182, 196, 0.35); }
+.chip svg { width: 14px; height: 14px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+.chip.danger { background: var(--berry); border-color: var(--berry); color: #fff; }
+
+/* ---------- 2. search ---------- */
+.search { position: relative; }
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 25px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid var(--pink);
+}
+.pill:focus-within { border-color: var(--pink-deep); }
+.pill svg { width: 13px; height: 13px; flex: none; fill: none; stroke: var(--ink-soft); stroke-width: 2.2; stroke-linecap: round; }
+.pill input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font: 16px/20px 'Gaegu', cursive;
+  color: var(--ink);
+  padding: 0;
+}
+.pill input::placeholder { color: var(--ink-soft); opacity: 0.8; }
+
+/* dropdowns (search results + notes list) */
+.results, .notes-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--paper);
+  border: 1.5px solid var(--pink);
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(233, 138, 160, 0.25);
+  padding: 4px;
+}
+.result, .list-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  padding: 3px 7px;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 18px;
+}
+.result.active, .result:hover, .list-item:hover, .list-item.active { background: rgba(244, 182, 196, 0.35); }
+.result .r-head { display: flex; gap: 6px; justify-content: space-between; }
+.result .r-title { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result .r-page { color: var(--ink-soft); flex: none; }
+.result .r-snip { color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result mark { background: var(--mark); color: var(--ink); border-radius: 4px; padding: 0 1px; }
+.empty-msg { padding: 6px 8px; font-size: 15px; color: var(--ink-soft); text-align: center; }
+.list-item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-item.current { font-weight: 700; }
+
+/* ---------- 3. notes row ---------- */
+.notesrow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.notesrow .chip { flex: 0 1 auto; min-width: 0; }
+#listLabel { overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- 4. writing area (ruled like paper) ---------- */
+.page-wrap { flex: 1 1 auto; min-height: 0; position: relative; }
+.page {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  resize: none;
+  border: none;
+  outline: none;
+  overflow: hidden;
+  padding: 2px 4px 0;
+  font-family: 'Gaegu', 'Comic Sans MS', cursive;
+  font-size: var(--fs);
+  line-height: var(--lh);
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  background-color: transparent;
+  background-image: repeating-linear-gradient(to bottom,
+    transparent 0, transparent calc(var(--lh) - 1px),
+    rgba(233, 138, 160, 0.25) calc(var(--lh) - 1px), rgba(233, 138, 160, 0.25) var(--lh));
+  background-position: 0 2px;
+  caret-color: var(--berry);
+}
+body.no-rule .page { background-image: none; }
+.page::placeholder { color: var(--ink-soft); opacity: 0.7; }
+.page::selection { background: var(--mark); color: var(--ink); }
+.page.flash { animation: flash 900ms ease; }
+@keyframes flash {
+  0%, 100% { background-color: transparent; }
+  25% { background-color: rgba(255, 211, 220, 0.55); }
+}
+
+/* ---------- 5. pager (beside the strawberry) ---------- */
+.pager {
+  position: absolute;
+  left: var(--pl);
+  right: calc(100% - var(--pr));
+  top: var(--pt);
+  bottom: calc(100% - var(--pb));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.page-label { font-size: 16px; color: var(--ink-soft); white-space: nowrap; }
+
+/* ---------- overlays ---------- */
+.overlay-area { pointer-events: none; z-index: 30; }
+.overlay-area > * { pointer-events: auto; }
+
+.panel {
+  position: absolute;
+  inset: 4px;
+  background: var(--paper);
+  border: 1.5px solid var(--pink);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(233, 138, 160, 0.25);
+  padding: 8px 12px 10px;
+  overflow-y: auto;
+  font-size: 17px;
+}
+.panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.panel h2 { margin: 0; font-size: 21px; font-weight: 700; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; }
+.row.buttons { justify-content: flex-start; flex-wrap: wrap; margin-top: 6px; gap: 6px; }
+.hint { margin: 0 0 4px; font-size: 14px; line-height: 16px; color: var(--berry); }
+
+.toggle {
+  appearance: none;
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: #EADFDB;
+  position: relative;
+  cursor: pointer;
+  margin: 0;
+  transition: background 150ms ease;
+  flex: none;
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(91, 58, 50, 0.25);
+  transition: transform 150ms ease;
+}
+.toggle:checked { background: var(--berry); }
+.toggle:checked::after { transform: translateX(16px); }
+
+.seg { display: inline-flex; border: 1.5px solid var(--pink); border-radius: 999px; overflow: hidden; }
+.seg button { border: none; background: transparent; padding: 0 9px; height: 22px; font-size: 15px; cursor: pointer; }
+.seg button.on { background: var(--pink); font-weight: 700; }
+.keys.listening { border-color: var(--berry); color: var(--berry); }
+
+.linkish { border: none; background: none; padding: 6px 0 2px; cursor: pointer; font-size: 16px; color: var(--ink-soft); text-decoration: underline dotted; }
+.deleted-list { font-size: 15px; }
+.deleted-item { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 2px 0; }
+.deleted-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deleted-item small { color: var(--ink-soft); }
+
+.confirm { inset: auto 10px 10px 10px; top: auto; }
+.confirm p { margin: 0 0 4px; font-size: 17px; line-height: 20px; }
+
+.toast {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 6px;
+  background: var(--paper);
+  border: 1.5px solid var(--pink-deep);
+  border-radius: 12px;
+  padding: 5px 10px;
+  font-size: 15px;
+  line-height: 18px;
+  box-shadow: 0 4px 12px rgba(233, 138, 160, 0.3);
+  cursor: pointer;
+  white-space: pre-line;
+}
+
+/* ---------- resize corner ---------- */
+.grip {
+  position: absolute;
+  right: 2.2%;
+  bottom: 2.2%;
+  width: 7%;
+  height: 7%;
+  min-width: 18px;
+  min-height: 18px;
+  cursor: nwse-resize;
+  -webkit-app-region: no-drag;
+  background:
+    linear-gradient(135deg, transparent 55%, rgba(233, 138, 160, 0.7) 55%, rgba(233, 138, 160, 0.7) 62%, transparent 62%,
+      transparent 72%, rgba(233, 138, 160, 0.7) 72%, rgba(233, 138, 160, 0.7) 79%, transparent 79%);
+  border-bottom-right-radius: 40%;
+}
+
+/* ---------- thin pink scrollbars for pop-ups ---------- */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--pink); border-radius: 999px; }
+
+/* ================= theme picker ================= */
+.picker {
+  position: absolute;
+  left: 4.5%;
+  top: 4%;
+  right: 4.5%;
+  bottom: 5%;
+  z-index: 60;
+  background: var(--paper);
+  border: 1.5px solid var(--accent, var(--pink));
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  padding: 10px 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.picker h2 { margin: 0 0 2px; font-size: 20px; font-weight: 700; text-align: center; flex: none; }
+.picker p.sub { margin: 0 0 8px; font-size: 14px; color: var(--ink-soft); text-align: center; flex: none; }
+.picker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1 1 auto; min-height: 0; overflow-y: auto; align-content: start; padding: 2px; }
+.theme-card {
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.theme-card:hover { transform: translateY(-1px); }
+.theme-card.current { border-color: var(--berry); }
+.theme-card img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 9px;
+  display: block;
+}
+.theme-card span { font-size: 13px; line-height: 15px; text-align: center; }
+
+/* ================= to-do view ================= */
+.todo-wrap { flex: 1 1 auto; min-height: 0; position: relative; overflow-y: auto; padding: 2px 2px 0; }
+.todo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 2px 0;
+  border-radius: 6px;
+}
+.todo-item.flash { animation: flash 900ms ease; }
+.todo-check {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border-radius: 6px;
+  border: 2px solid var(--accent, var(--pink));
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.todo-check svg { width: 12px; height: 12px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+.todo-check.done { background: var(--berry); border-color: var(--berry); }
+.todo-check.done svg { opacity: 1; }
+.todo-text {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font: var(--fs)/calc(var(--lh) - 2px) 'Gaegu', cursive;
+  color: var(--ink);
+  resize: none;
+  overflow: hidden;
+  padding: 0;
+}
+.todo-item.done .todo-text { text-decoration: line-through; color: var(--ink-soft); }
+.todo-del {
+  flex: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.todo-item:hover .todo-del { opacity: 0.7; }
+.todo-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  color: var(--ink-soft);
+  cursor: text;
+  font-size: var(--fs);
+}
+.todo-add .plus { width: 18px; text-align: center; }
+.todo-empty { color: var(--ink-soft); font-size: 15px; padding: 6px 2px; }
+
+/* to-do progress shown where the pager sits */
+.todo-progress { font-size: 16px; color: var(--ink-soft); }
+
+/* ================= notes/to-do type toggle ================= */
+.type-toggle { display: inline-flex; border: 1.5px solid var(--accent, var(--pink)); border-radius: 999px; overflow: hidden; flex: none; }
+.type-toggle button { border: none; background: transparent; padding: 0 8px; height: 24px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+.type-toggle button svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.type-toggle button.on { background: var(--accent, var(--pink)); font-weight: 700; }

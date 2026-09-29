@@ -1,0 +1,10 @@
+/* Web build: show the square note centred on the page. */
+html, body { background: #FBEFF2; }
+.note {
+  inset: auto !important;
+  left: 50% !important; top: 50% !important;
+  width: min(92vmin, 560px) !important; height: min(92vmin, 560px) !important;
+  transform: translate(-50%, -50%) !important;
+  opacity: 1 !important; transition: none !important;
+}
+.grip, #collapseBtn, #pinBtn { display: none !important; }

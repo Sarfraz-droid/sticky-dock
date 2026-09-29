@@ -1,0 +1,55 @@
+/* The thin tab that waits on the screen edge. Same pink + cream as the note. */
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  color-scheme: light; /* ignore Windows dark mode: the design is always pink + cream */
+}
+
+.strip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30px;
+  box-sizing: border-box;
+  background: var(--accent, #F4B6C4);
+  cursor: pointer;
+  transition: width 140ms ease, filter 140ms ease;
+}
+.strip.right { right: 0; border-radius: 16px 0 0 16px; padding: 4px 0 4px 4px; }
+.strip.left  { left: 0;  border-radius: 0 16px 16px 0; padding: 4px 4px 4px 0; }
+
+.strip:hover { width: 36px; filter: brightness(1.06) saturate(1.1); }
+.strip.dragging { cursor: ns-resize; }
+
+.inner {
+  height: 100%;
+  background: var(--cream, #FFF8E8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+}
+.strip.right .inner { border-radius: 12px 0 0 12px; }
+.strip.left  .inner { border-radius: 0 12px 12px 0; }
+
+/* Tiny strawberry, cropped live from note-bg.png by strip.js */
+.berry {
+  width: 21px;
+  height: 21px;
+  background: center / contain no-repeat;
+  flex: none;
+}
+
+.label {
+  writing-mode: vertical-rl;
+  font-family: 'Gaegu', 'Comic Sans MS', cursive;
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 1px;
+  color: var(--ink, #6B4238);
+}
