@@ -29,9 +29,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: sticky-dock-macos
-          path: |
-            dist/*.dmg
-            dist/*.zip
+          # zip only: the dmg is a duplicate of the same app, doubling the upload.
+          path: dist/*.zip
+          # zip is already compressed; re-deflating wastes CPU and time.
+          compression-level: 0
+          retention-days: 7
       - name: Attach to GitHub release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
