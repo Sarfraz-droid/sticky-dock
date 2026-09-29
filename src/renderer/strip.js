@@ -70,3 +70,26 @@ stripEl.addEventListener('pointerup', () => {
   dragging = false;
   stripEl.classList.remove('dragging');
 });
+
+// Hover to peek: resting the pointer on the tab for a moment opens the note with the
+// usual slide-out animation. The tab "charges up" (see .arming in strip.css) so it
+// never feels like a surprise, and moving away before it finishes cancels it.
+const HOVER_OPEN_MS = 450;
+let hoverTimer = null;
+
+function cancelHover() {
+  clearTimeout(hoverTimer);
+  hoverTimer = null;
+  stripEl.classList.remove('arming');
+}
+
+stripEl.addEventListener('pointerenter', () => {
+  if (downY !== null || dragging) return;
+  stripEl.classList.add('arming');
+  hoverTimer = setTimeout(() => {
+    hoverTimer = null;
+    if (downY === null) window.dock.openFromStrip();
+  }, HOVER_OPEN_MS);
+});
+stripEl.addEventListener('pointerleave', cancelHover);
+stripEl.addEventListener('pointerdown', cancelHover);
