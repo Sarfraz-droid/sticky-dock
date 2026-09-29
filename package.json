@@ -35,7 +35,8 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Sticky Dock",
-      "runAfterFinish": true
+      "runAfterFinish": true,
+      "artifactName": "Sticky-Dock-Setup.${ext}"
     },
     "mac": {
       "target": [
@@ -61,7 +62,7 @@
         "LSUIElement": true,
         "NSSupportsAutomaticGraphicsSwitching": true
       },
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
+      "artifactName": "Sticky-Dock-mac.${ext}"
     },
     "dmg": {
       "title": "Sticky Dock",
@@ -70,8 +71,8 @@
   },
   "scripts": {
     "start": "electron .",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win --publish never",
+    "build:mac": "electron-builder --mac --publish never",
     "build:web": "node scripts/build-web.js",
     "serve:web": "npx --yes http-server dist-web -p 8080 -c-1"
   },

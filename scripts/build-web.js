@@ -22,7 +22,10 @@ html = html
   .replace('<script src="pagination.js">', '<script src="../shared/themes.js"></script>\n  <script src="web-shim.js"></script>\n  <script src="pagination.js">')
   .replace('<title>Sticky Dock</title>', '<title>Sticky Dock</title>\n  <meta name="viewport" content="width=device-width, initial-scale=1">');
 fs.writeFileSync(path.join(out, 'src/renderer/index.html'), html);
-fs.writeFileSync(path.join(out, 'index.html'),
-  '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=src/renderer/index.html"><title>Sticky Dock</title>');
+// The marketing landing page is the site's home page; the web app is at /app/.
+fs.copyFileSync(path.join(root, 'landing/index.html'), path.join(out, 'index.html'));
+fs.mkdirSync(path.join(out, 'app'), { recursive: true });
+fs.writeFileSync(path.join(out, 'app/index.html'),
+  '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=../src/renderer/index.html"><title>Sticky Dock</title>');
 fs.writeFileSync(path.join(out, '.nojekyll'), '');
 console.log('Web build written to dist-web/');

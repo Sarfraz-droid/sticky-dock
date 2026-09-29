@@ -123,7 +123,7 @@ with Windows and appears in your Start menu — no Command Prompt needed afterwa
    ```
 
 3. When it finishes, open the new **`dist`** folder inside `sticky-dock`. Inside
-   you'll find a file named something like **`Sticky Dock Setup 1.0.0.exe`**.
+   you'll find a file named something like **`Sticky-Dock-Setup.exe`**.
 4. Double-click that file to install Sticky Dock like any normal program.
 
 ---
