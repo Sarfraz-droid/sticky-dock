@@ -212,6 +212,20 @@ kbd { font: 700 0.82em var(--body); background: var(--pink); border-radius: 6px;
 .dots button.on { background: var(--berry); }
 .dots button::before { content: ''; display: block; margin: -10px; height: 28px; }
 
+/* ---------- email gate before download ---------- */
+.gate { border: 0; padding: 0; background: transparent; max-width: min(440px, calc(100vw - 32px)); width: 100%; color: var(--ink); }
+.gate::backdrop { background: rgba(91, 58, 50, .45); backdrop-filter: blur(3px); }
+.gate form { background: var(--cream); border-radius: 28px; padding: 30px 28px 24px; box-shadow: inset 0 0 0 3px var(--pink-deep), 0 30px 60px -20px rgba(91, 58, 50, .5); text-align: left; }
+.gate h3 { font-family: var(--hand); font-size: 34px; line-height: 1.05; margin: 0 0 6px; }
+.gate p { margin: 0 0 16px; color: var(--ink-soft); font-size: 16px; }
+.gate input[type=email] { width: 100%; box-sizing: border-box; font: inherit; font-size: 18px; color: var(--ink); background: #fff; border: 0; border-radius: 14px; padding: 13px 16px; box-shadow: inset 0 0 0 2px var(--pink); outline: none; }
+.gate input[type=email]:focus { box-shadow: inset 0 0 0 3px var(--berry); }
+.gate .err { min-height: 20px; margin: 8px 2px 0; color: var(--berry); font-size: 14px; font-weight: 700; }
+.gate .row { display: flex; gap: 12px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.gate button[type=submit] { font: inherit; font-weight: 800; font-size: 17px; color: #fff; background: var(--berry); border: 0; border-radius: 999px; padding: 12px 24px; cursor: pointer; }
+.gate button[type=submit]:disabled { opacity: .6; cursor: progress; }
+.gate .skip { font: inherit; font-size: 14px; background: none; border: 0; color: var(--ink-soft); text-decoration: underline; cursor: pointer; padding: 6px; }
+
 /* ---------- download ---------- */
 .get { padding: 180px 0 60px; text-align: center; }
 .get h2 { font-size: clamp(48px, 6vw, 80px); }
@@ -430,6 +444,19 @@ footer .ver { margin-top: 26px; font-size: 14px; color: var(--ink-soft); }
   </div>
 </section>
 
+<dialog class="gate" id="gate" aria-labelledby="gateTitle">
+  <form method="dialog" id="gateForm" novalidate>
+    <h3 id="gateTitle">Where should we send updates?</h3>
+    <p>Pop in your email and your download starts right away. Just news about new versions, never spam.</p>
+    <input type="email" id="gateEmail" name="email" placeholder="you@example.com" autocomplete="email" required aria-describedby="gateErr">
+    <p class="err" id="gateErr" role="alert"></p>
+    <div class="row">
+      <button type="submit" id="gateGo">Download</button>
+      <button type="button" class="skip" id="gateCancel">Not now</button>
+    </div>
+  </form>
+</dialog>
+
 <section class="setup" id="setup">
   <div class="wrap">
     <h2 class="reveal" id="setupTitle">Setting it up on a Mac</h2>
@@ -488,6 +515,12 @@ footer .ver { margin-top: 26px; font-size: 14px; color: var(--ink-soft); }
    Put your two files online (for example as GitHub "release" files) and paste
    their web addresses below. If you keep the files next to this page in a folder
    called "downloads", the defaults already work. */
+/* ==== Email gate ====
+   The email is saved to a Supabase table (public.download_signups) through its REST API,
+   using the *publishable* key. That key is safe in a web page: row-level security only
+   lets visitors INSERT, never read. Leave SUPABASE_URL empty to skip saving. */
+var SUPABASE_URL = 'https://rpuuwnsabzangkeutqal.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_1VdVlJ8Sjk5GZc07BaWhlQ_LOBRFfH7';
 var DOWNLOADS = {
   mac: { label: 'macOS', url: 'https://github.com/Sarfraz-droid/sticky-dock/releases/latest/download/Sticky-Dock-mac.zip', file: 'Sticky-Dock-mac.zip', size: '101 MB' },
   win: { label: 'Windows', url: 'https://github.com/Sarfraz-droid/sticky-dock/releases/latest/download/Sticky-Dock-Setup.exe', file: 'Sticky-Dock-Setup.exe', size: '79 MB' }
@@ -863,6 +896,51 @@ var THEMES = [{"id": "strawberry", "name": "Strawberry cat", "rule": true, "c": 
       updateRail();
     });
   }
+  // ---- email gate: ask for an email, save it, then start the download ----
+  (function () {
+    var gate = $('#gate'), form = $('#gateForm'), input = $('#gateEmail'), errEl = $('#gateErr'), go = $('#gateGo');
+    var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, KEY = 'sd-email', pending = null;
+    function remembered() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+    function remember(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+    function startDownload(os) {
+      var d = DOWNLOADS[os], a = document.createElement('a');
+      a.href = d.url; a.setAttribute('download', d.file); a.rel = 'noopener';
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    function save(email, os) {
+      if (!SUPABASE_URL || !SUPABASE_KEY) return Promise.resolve();
+      return fetch(SUPABASE_URL + '/rest/v1/download_signups', {
+        method: 'POST',
+        headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal' },
+        body: JSON.stringify({ email: email, os: os, source: 'landing' }),
+        keepalive: true
+      }).catch(function () { /* never block the download on a network hiccup */ });
+    }
+    function open(os) {
+      pending = os; errEl.textContent = ''; go.disabled = false;
+      var known = remembered(); if (known) input.value = known;
+      if (gate.showModal) gate.showModal(); else gate.setAttribute('open', '');
+      input.focus();
+    }
+    function close() { if (gate.close) gate.close(); else gate.removeAttribute('open'); }
+    $('#mainDl').addEventListener('click', function (e) {
+      e.preventDefault();
+      if (!chosen) return;
+      var known = remembered();
+      if (known && EMAIL_RE.test(known)) { startDownload(chosen); return; } // already signed up on this browser
+      open(chosen);
+    });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = input.value.trim().toLowerCase();
+      if (!EMAIL_RE.test(email) || email.length > 254) { errEl.textContent = 'That email looks a little off. Mind checking it?'; input.focus(); return; }
+      go.disabled = true; errEl.textContent = '';
+      var os = pending || chosen;
+      save(email, os).then(function () { remember(email); close(); startDownload(os); });
+    });
+    $('#gateCancel').addEventListener('click', close);
+    gate.addEventListener('click', function (e) { if (e.target === gate) close(); });
+  })();
   $$('.os').forEach(function (b) {
     b.addEventListener('click', function () { choose(b.dataset.os); });
     b.addEventListener('keydown', function (e) {
