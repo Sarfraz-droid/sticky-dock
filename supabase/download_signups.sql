@@ -11,12 +11,18 @@ create table if not exists public.download_signups (
   created_at timestamptz not null default now()
 );
 
--- one row per email (the page sends "ignore-duplicates")
+-- one row per email (a repeat signup gets a 409 from the API, which the page ignores)
 create unique index if not exists download_signups_email_key on public.download_signups (lower(email));
 
 alter table public.download_signups enable row level security;
 
-drop policy if exists "anyone can sign up" on public.download_signups;
+-- remove any policy left over from earlier attempts, then add the one we want
+do $$ declare r record; begin
+  for r in select policyname from pg_policies where schemaname = 'public' and tablename = 'download_signups' loop
+    execute format('drop policy %I on public.download_signups', r.policyname);
+  end loop;
+end $$;
+
 create policy "anyone can sign up" on public.download_signups
   for insert to anon, authenticated
   with check (true);
