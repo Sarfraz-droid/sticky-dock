@@ -15,9 +15,9 @@ The Windows `.exe` installer will not run on a Mac. Use one of these instead.
 
 ### Easiest: download the ready-made Mac app
 
-1. Download **`Sticky-Dock-mac.zip`** and double-click it to unzip. You get
+1. Download **`Sticky-Dock-mac.dmg`** and double-click it. A window opens with
    **`Sticky Dock.app`**.
-2. Drag **`Sticky Dock.app`** into your **Applications** folder.
+2. Drag **`Sticky Dock.app`** onto the **Applications** folder shortcut in that window.
 3. Because the app isn't from the App Store, macOS guards it the first time.
    Open the **Terminal** app (press `Cmd + Space`, type `Terminal`, Enter) and
    paste this one line, then press Enter:
@@ -251,7 +251,7 @@ That's it. Enjoy your strawberry notes! 🍓
 ## Automatic builds (GitHub Actions)
 
 - **`.github/workflows/build-macos.yml`** — builds a universal (Apple Silicon +
-  Intel) `.dmg` and `.zip` on every push; tagged releases (`v*`) attach them to
+  Intel) `.dmg` on every push; tagged releases (`v*`) attach them to
   the GitHub release.
 - **`.github/workflows/build-web.yml`** — builds the browser version
   (`npm run build:web` → `dist-web/`) and publishes it to GitHub Pages from `main`
