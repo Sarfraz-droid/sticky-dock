@@ -12,6 +12,8 @@
     "directories": {
       "output": "dist"
     },
+    "compression": "maximum",
+    "asar": true,
     "files": [
       "src/**/*",
       "assets/**/*",
@@ -45,15 +47,10 @@
           "arch": [
             "universal"
           ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "universal"
-          ]
         }
       ],
       "category": "public.app-category.productivity",
+      "electronLanguages": ["en", "en_US"],
       "icon": "build/icon.icns",
       "identity": null,
       "hardenedRuntime": false,
