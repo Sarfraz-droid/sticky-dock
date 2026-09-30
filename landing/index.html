@@ -923,13 +923,12 @@ var THEMES = [{"id": "strawberry", "name": "Strawberry cat", "rule": true, "c": 
       input.focus();
     }
     function close() { if (gate.close) gate.close(); else gate.removeAttribute('open'); }
-    $('#mainDl').addEventListener('click', function (e) {
+    ['#mainDl', '#heroDl'].forEach(function (sel) { $(sel).addEventListener('click', onDownloadClick); });
+    function onDownloadClick(e) {
+      if (!chosen) return; // no computer picked yet: let the link scroll to the picker
       e.preventDefault();
-      if (!chosen) return;
-      var known = remembered();
-      if (known && EMAIL_RE.test(known)) { startDownload(chosen); return; } // already signed up on this browser
-      open(chosen);
-    });
+      open(chosen); // always ask first; a returning visitor just sees their email prefilled
+    }
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var email = input.value.trim().toLowerCase();
